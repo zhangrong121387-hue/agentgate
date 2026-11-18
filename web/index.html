@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgentGate — Agent ID-gated drops on BNB Smart Chain</title>
+<meta name="description" content="AgentGate is a reusable smart-contract gate that restricts any drop to holders of a SPACE ID Agent ID — one verified person, one pass. Free demo badge inside.">
+<style>
+  :root {
+    --bg: #0b0e13; --panel: #131722; --panel2: #171c2a; --line: #232a3d;
+    --text: #e8ecf4; --muted: #98a2b8; --accent: #f0b90b; --accent-dim: #8a6d1d;
+    --ok: #3fb96f; --no: #e5534b; --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.6 -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  a { color: var(--accent); }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 0 20px 64px; }
+  header.hero { padding: 72px 0 40px; text-align: center; }
+  .logo { font-size: 15px; letter-spacing: .35em; color: var(--accent);
+    text-transform: uppercase; margin-bottom: 14px; }
+  h1 { font-size: 44px; line-height: 1.15; margin: 0 0 16px; }
+  h1 .hl { color: var(--accent); }
+  .sub { color: var(--muted); font-size: 18px; max-width: 640px; margin: 0 auto; }
+  section { background: var(--panel); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 28px; margin: 22px 0; }
+  h2 { margin: 0 0 6px; font-size: 22px; }
+  .hint { color: var(--muted); margin: 0 0 18px; font-size: 15px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  input[type="text"] { flex: 1 1 340px; background: var(--panel2); color: var(--text);
+    border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font-size: 15px;
+    font-family: ui-monospace, Menlo, Consolas, monospace; }
+  button { background: var(--accent); color: #191204; border: 0; border-radius: 10px;
+    padding: 12px 20px; font-size: 15px; font-weight: 600; cursor: pointer; }
+  button.secondary { background: var(--panel2); color: var(--text); border: 1px solid var(--line); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .result { margin-top: 16px; border-radius: 10px; padding: 14px 16px; display: none; }
+  .result.ok { display: block; background: rgba(63,185,111,.12); border: 1px solid var(--ok); }
+  .result.no { display: block; background: rgba(229,83,75,.10); border: 1px solid var(--no); }
+  .result.info { display: block; background: var(--panel2); border: 1px solid var(--line); }
+  .progress { height: 12px; background: var(--panel2); border-radius: 6px; overflow: hidden;
+    border: 1px solid var(--line); margin: 12px 0 6px; }
+  .progress > div { height: 100%; background: var(--accent); width: 0%; transition: width .4s; }
+  .stat { color: var(--muted); font-size: 14px; }
+  .stat b { color: var(--text); }
+  pre { background: #0a0d12; border: 1px solid var(--line); border-radius: 10px;
+    padding: 16px; overflow-x: auto; font-size: 13.5px; line-height: 1.55; }
+  code { font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px;
+    word-break: break-all; }
+  footer { color: var(--muted); font-size: 14px; margin-top: 34px; }
+  footer section { background: transparent; border-style: dashed; }
+  footer li { margin: 4px 0; }
+  .pill { display: inline-block; border: 1px solid var(--accent-dim); color: var(--accent);
+    border-radius: 999px; padding: 2px 12px; font-size: 13px; margin-bottom: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="logo">AgentGate</div>
+    <h1>One verified person.<br><span class="hl">One pass.</span> No Sybil farms.</h1>
+    <p class="sub">AgentGate is a reusable smart-contract gate for BNB Smart Chain.
+      Any project can inherit it to restrict a drop, a mint, or any function to holders of a
+      <b>SPACE ID Agent ID</b> — a non-transferable identity that one verified person can hold
+      exactly once. If you hold an Agent ID, you pass. Bots with a thousand fresh wallets don't.</p>
+  </header>
+
+  <section id="eligibility">
+    <h2>Check your eligibility</h2>
+    <p class="hint">Reads the Agent ID contract on BSC directly from your browser —
+      no wallet signature, no data leaves your device except a public RPC call.</p>
+    <div class="row">
+      <input type="text" id="addrInput" placeholder="0x… wallet address" spellcheck="false">
+      <button id="checkBtn">Check</button>
+      <button id="connectBtn" class="secondary">Connect wallet</button>
+    </div>
+    <div id="checkResult" class="result"></div>
+  </section>
+
+  <section id="mint">
+    <h2>Demo: the AgentGate Badge</h2>
+    <p class="hint">A free commemorative ERC-721 badge (AGB) proving your Agent ID passed the gate.
+      One per holder, ever. It promises nothing of value — it is a proof of identity, not an investment.</p>
+    <div id="mintBody"></div>
+  </section>
+
+  <section id="projects">
+    <h2>For projects: integrate in three lines</h2>
+    <p class="hint">Inherit <code>AgentGate</code>, point it at the Agent ID contract, and guard any
+      function with <code>_requireAgentID()</code>. That is the whole integration.</p>
+    <pre><code>import {AgentGate} from "./AgentGate.sol";
+
+contract MyDrop is AgentGate {
+    // BSC mainnet Agent ID (SPACE ID): 0x60b9262456de011f7d15a54cdd8c48baaa8b022f
+    constructor() AgentGate(0x60b9262456de011f7d15a54cdd8c48baaa8b022f) {}
+
+    function mint() external {
+        _requireAgentID();   // reverts unless the caller holds an Agent ID
+        // ... your drop logic; one-person-one-pass is now enforced
+        //     by the identity itself, not by an allowlist you maintain.
+    }
+}</code></pre>
+    <p class="hint">Full source, tests and the reference badge contract are open source (MIT) —
+      see the project repository. The Agent ID address is <code>immutable</code> in the gate:
+      it can never be swapped for a weaker identity contract after deployment.</p>
+  </section>
+
+  <footer>
+    <section>
+      <h2 style="font-size:18px">Owner powers — the complete list</h2>
+      <p>The AgentGate Badge contract is intentionally almost powerless. Its owner can only:</p>
+      <ul>
+        <li><b>Open or close the mint window</b> (<code>setMintOpen</code>).</li>
+        <li><b>Lower the supply cap</b> (<code>setMaxSupply</code>) — never raise it, never below the amount already minted.</li>
+        <li><b>Transfer or renounce ownership</b> — renouncing freezes the two powers above forever.</li>
+      </ul>
+      <p>The owner <b>cannot</b> mint (they must pass the same Agent ID gate as everyone else),
+        cannot block or reverse transfers, cannot charge fees, and cannot withdraw funds —
+        the contract has no payable functions and holds no funds. The badge is free and always will be.</p>
+      <p>AgentGate is an independent open-source project. It is <b>not affiliated with, endorsed by,
+        or an official product of Binance</b> or SPACE ID. Nothing on this page is financial advice,
+        and the badge carries no promise of return or value.</p>
+    </section>
+  </footer>
+
+</div>
+
+<script>
+"use strict";
+/* ================================================================
+   CONFIG — fill in after deployment (phase 2)
+   ================================================================ */
+const CONFIG = {
+  // AgentGateBadge contract address on BSC. Empty string = not deployed yet;
+  // the page then shows "deployment pending" and disables minting gracefully.
+  BADGE_CONTRACT: "",
+  // SPACE ID Agent ID contract on BSC mainnet (fixed, do not change):
+  AGENT_ID_CONTRACT: "0x60b9262456de011f7d15a54cdd8c48baaa8b022f",
+  BSC_CHAIN_ID_HEX: "0x38", // 56
+  RPC_URLS: [
+    "https://bsc-dataseed.binance.org",
+    "https://bsc-dataseed1.defibit.io"
+  ],
+  EXPLORER: "https://bscscan.com"
+};
+
+/* Minimal hand-rolled ABI: function selectors (verified against the contracts) */
+const SEL = {
+  balanceOf:  "0x70a08231", // balanceOf(address) — used for BOTH the Agent ID and badge contracts
+  hasClaimed: "0x73b2e80e", // hasClaimed(address)
+  totalMinted:"0xa2309ff8", // totalMinted()
+  maxSupply:  "0xd5abeb01", // maxSupply()
+  mintOpen:   "0x24bbd049", // mintOpen()
+  mint:       "0x1249c58b"  // mint()
+};
+
+let connectedAccount = null;
+
+/* ---------- tiny JSON-RPC helpers (fetch based, with RPC fallback) ---------- */
+function encodeAddressCall(selector, address) {
+  return selector + address.toLowerCase().replace(/^0x/, "").padStart(64, "0");
+}
+async function rpc(method, params) {
+  let lastErr;
+  for (const url of CONFIG.RPC_URLS) {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params })
+      });
+      const json = await res.json();
+      if (json.error) throw new Error(json.error.message || "RPC error");
+      return json.result;
+    } catch (e) { lastErr = e; }
+  }
+  throw lastErr || new Error("All RPC endpoints failed");
+}
+async function ethCall(to, data) {
+  return rpc("eth_call", [{ to, data }, "latest"]);
+}
+function hexToBigInt(hex) { return BigInt(hex); }
+function isAddress(s) { return /^0x[0-9a-fA-F]{40}$/.test((s || "").trim()); }
+
+/* ---------- eligibility check ---------- */
+const addrInput = document.getElementById("addrInput");
+const checkResult = document.getElementById("checkResult");
+
+function showResult(kind, html) {
+  checkResult.className = "result " + kind;
+  checkResult.innerHTML = html;
+}
+
+async function checkEligibility() {
+  const addr = addrInput.value.trim();
+  if (!isAddress(addr)) {
+    showResult("no", "Please enter a valid BSC address (0x + 40 hex characters).");
+    return;
+  }
+  showResult("info", "Checking the Agent ID contract on BSC…");
+  try {
+    const balHex = await ethCall(CONFIG.AGENT_ID_CONTRACT, encodeAddressCall(SEL.balanceOf, addr));
+    const holds = hexToBigInt(balHex) > 0n;
+    if (!holds) {
+      showResult("no",
+        "<b>No Agent ID.</b> This address does not hold a SPACE ID Agent ID, so the gate " +
+        "would not let it mint. Agent IDs are claimed once per verified person inside the Binance App " +
+        "(Wallet → Agent ID banner).");
+      return;
+    }
+    let extra = "";
+    if (CONFIG.BADGE_CONTRACT) {
+      const claimedHex = await ethCall(CONFIG.BADGE_CONTRACT, encodeAddressCall(SEL.hasClaimed, addr));
+      const badgeBalHex = await ethCall(CONFIG.BADGE_CONTRACT, encodeAddressCall(SEL.balanceOf, addr));
+      const claimed = hexToBigInt(claimedHex) !== 0n;
+      extra = claimed
+        ? "<br>This address has <b>already claimed</b> its badge (badge balance: " +
+          hexToBigInt(badgeBalHex).toString() + "). One per holder, ever."
+        : "<br>This address has <b>not claimed</b> its badge yet — it can mint below.";
+    } else {
+      extra = "<br>The badge contract is not deployed yet, so claim status can't be read — " +
+              "but the identity check above is the real gate, and this address passes it.";
+    }
+    showResult("ok", "<b>Agent ID holder ✓</b> This address holds an Agent ID and passes the AgentGate." + extra);
+  } catch (e) {
+    showResult("no", "Could not reach a BSC RPC endpoint. Please try again in a moment.");
+  }
+}
+document.getElementById("checkBtn").addEventListener("click", checkEligibility);
+
+/* ---------- wallet connect ---------- */
+async function connectWallet() {
+  if (!window.ethereum) {
+    showResult("no", "No browser wallet found. Install MetaMask (or use the Binance App's " +
+      "built-in browser), or just paste an address above — checking needs no wallet.");
+    return null;
+  }
+  const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+  connectedAccount = accounts[0];
+  addrInput.value = connectedAccount;
+  document.getElementById("connectBtn").textContent =
+    "Connected: " + connectedAccount.slice(0, 6) + "…" + connectedAccount.slice(-4);
+  renderMintSection();
+  return connectedAccount;
+}
+document.getElementById("connectBtn").addEventListener("click", async () => {
+  try { const a = await connectWallet(); if (a) checkEligibility(); }
+  catch (e) { showResult("no", "Wallet connection was rejected."); }
+});
+if (window.ethereum && window.ethereum.on) {
+  window.ethereum.on("accountsChanged", (accs) => {
+    connectedAccount = accs[0] || null;
+    renderMintSection();
+  });
+}
+
+/* ---------- demo mint section ---------- */
+const mintBody = document.getElementById("mintBody");
+
+async function renderMintSection() {
+  if (!CONFIG.BADGE_CONTRACT) {
+    mintBody.innerHTML =
+      '<div class="result info" style="display:block">' +
+      "<b>Deployment pending.</b> The badge contract has not been deployed to BSC yet, " +
+      "so minting is disabled. The eligibility check above already works against the live " +
+      "Agent ID contract — that check <i>is</i> the gate the badge will use.</div>";
+    return;
+  }
+  mintBody.innerHTML = '<p class="stat">Loading supply from BSC…</p>';
+  try {
+    const [mintedHex, maxHex, openHex] = await Promise.all([
+      ethCall(CONFIG.BADGE_CONTRACT, SEL.totalMinted),
+      ethCall(CONFIG.BADGE_CONTRACT, SEL.maxSupply),
+      ethCall(CONFIG.BADGE_CONTRACT, SEL.mintOpen)
+    ]);
+    const minted = hexToBigInt(mintedHex), max = hexToBigInt(maxHex);
+    const open = hexToBigInt(openHex) !== 0n;
+    const pct = max > 0n ? Number((minted * 10000n) / max) / 100 : 0;
+    mintBody.innerHTML =
+      '<div class="progress"><div style="width:' + pct + '%"></div></div>' +
+      '<p class="stat"><b>' + minted.toString() + "</b> / " + max.toString() +
+      " badges minted · Mint window: <b>" + (open ? "OPEN" : "CLOSED") + "</b></p>" +
+      '<div class="row"><button id="mintBtn"' + (open ? "" : " disabled") + ">Mint my badge (free)</button>" +
+      '<button id="refreshBtn" class="secondary">Refresh</button></div>' +
+      '<div id="mintStatus" style="margin-top:14px"></div>' +
+      '<p class="stat">Contract: <a class="mono" target="_blank" rel="noopener" href="' +
+      CONFIG.EXPLORER + "/address/" + CONFIG.BADGE_CONTRACT + '">' + CONFIG.BADGE_CONTRACT + "</a></p>";
+    document.getElementById("refreshBtn").addEventListener("click", renderMintSection);
+    document.getElementById("mintBtn").addEventListener("click", doMint);
+  } catch (e) {
+    mintBody.innerHTML = '<p class="stat">Could not load supply from BSC RPC. ' +
+      '<button class="secondary" onclick="renderMintSection()">Retry</button></p>';
+  }
+}
+
+async function doMint() {
+  const status = document.getElementById("mintStatus");
+  try {
+    if (!window.ethereum) {
+      status.innerHTML = "No browser wallet found — install MetaMask or open this page in the Binance App browser.";
+      return;
+    }
+    if (!connectedAccount) await connectWallet();
+    const chainId = await window.ethereum.request({ method: "eth_chainId" });
+    if (chainId !== CONFIG.BSC_CHAIN_ID_HEX) {
+      await window.ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: CONFIG.BSC_CHAIN_ID_HEX }]
+      });
+    }
+    status.textContent = "Confirm the mint in your wallet… (it is free — you only pay the BSC gas).";
+    const txHash = await window.ethereum.request({
+      method: "eth_sendTransaction",
+      params: [{ from: connectedAccount, to: CONFIG.BADGE_CONTRACT, data: SEL.mint }]
+    });
+    status.innerHTML = "Mint submitted: <a target=\"_blank\" rel=\"noopener\" href=\"" +
+      CONFIG.EXPLORER + "/tx/" + txHash + "\">" + txHash + "</a> — refresh in a few seconds to see the supply move.";
+  } catch (e) {
+    status.textContent = "Mint did not go through: " + (e && e.message ? e.message : "rejected or reverted") +
+      " — common causes: no Agent ID on this wallet, badge already claimed, or the mint window is closed.";
+  }
+}
+
+renderMintSection();
+</script>
+</body>
+</html>

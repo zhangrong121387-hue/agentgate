@@ -1,0 +1,19 @@
+{
+  "name": "AgentGate Badge",
+  "description": "A free commemorative badge for verified Agent ID holders, minted through AgentGate - an Agent ID-gated mint gate for BNB Smart Chain. One badge per Agent ID holder, ever. The badge promises nothing of value; it is proof the holder's Agent ID passed the gate.",
+  "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4KPGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+CjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzBiMWUzYSIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzEyM2E2YiIvPgo8L2xpbmVhckdyYWRpZW50PjwvZGVmcz4KPHJlY3QgeD0iMTYiIHk9Ijk2IiB3aWR0aD0iNDgwIiBoZWlnaHQ9IjMyMCIgcng9IjI4IiBmaWxsPSJ1cmwoI2cpIiBzdHJva2U9IiNmMGI5MGIiIHN0cm9rZS13aWR0aD0iNiIvPgo8cGF0aCBkPSJNMjU2IDE1MGw3NCAyNnY1NGMwIDUyLTMyIDg4LTc0IDEwOC00Mi0yMC03NC01Ni03NC0xMDh2LTU0eiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZjBiOTBiIiBzdHJva2Utd2lkdGg9IjEwIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CjxwYXRoIGQ9Ik0yMjIgMjQ2bDI0IDI0IDQ2LTUwIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMTIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8dGV4dCB4PSIyNTYiIHk9IjM2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMzAiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSIjZmZmZmZmIj5BZ2VudEdhdGUgQmFkZ2U8L3RleHQ+Cjx0ZXh0IHg9IjI1NiIgeT0iMzk4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNyIgbGV0dGVyLXNwYWNpbmc9IjMiIGZpbGw9IiNmMGI5MGIiPkFHRU5UIElEIFZFUklGSUVEPC90ZXh0Pgo8L3N2Zz4=",
+  "attributes": [
+    {
+      "trait_type": "Gate",
+      "value": "Agent ID"
+    },
+    {
+      "trait_type": "Chain",
+      "value": "BNB Smart Chain"
+    },
+    {
+      "trait_type": "Edition",
+      "value": "Genesis"
+    }
+  ]
+}
