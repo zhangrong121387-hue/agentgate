@@ -107,6 +107,42 @@ Compiled 5 Solidity files successfully (evm target: paris).
 - ⚠️ That wallet currently holds no BSC BNB (it holds RH-chain ETH) — first top it up with ~0.005 BNB on BSC (e.g. send from the Binance Agentic Wallet to 0x9aFbdDFF5dFbae8372F7A794afcC2345700240F8 on BSC; the agent can prepare that transfer for your approval).
 - ⚠️ The badge **owner will be the MetaMask address**, so `setMintOpen(true)` must then be clicked by you in Remix (Deployed Contracts → `setMintOpen` with `true`) or via BscScan Write — the agent cannot do that step via baw. The agent still does verification prep, the smoke mint from the Agentic Wallet, and the web CONFIG.
 
+## Phase 2 — Route A EXECUTED 2026-11-18 (~19:24–19:28 CST) — LIVE ✅
+
+User chose Route A in chat ("你全包，我只确认一笔小额转账"). baw cannot deploy, so deployment was done from a one-time key funded by one 0.005 BNB transfer from the Agentic Wallet. (In the event, the funding preview returned `requireConfirmation=false`, so no in-app approval was needed at all.)
+
+### Gas sanity (before any transfer)
+- `eth_gasPrice` on two BSC RPCs: **0.05 gwei** (50,000,000 wei) on both.
+- Worst case (deploy 3,080,989 + transferOwnership ~50k + sweep 21k) × 0.05 gwei ≈ **0.000158 BNB** → 0.005 BNB covers it ~31× (≥2× headroom ✓).
+
+### One-time deployer
+- Deployer address: **`0xD96F212971D4E985991bbafedB2DDe8766995F79`** (key generated locally with ethers, stored only in `deploy/deployer-key.txt` chmod 0600, **shredded after the sweep** — see below).
+- Init code re-verified byte-identical against the artifacts + constructor args (agentID `0x60b9262456de011f7d15a54cdd8c48baaa8b022f`, tokenURI from `metadata/tokenURI.txt`, maxSupply 10000) before use.
+
+### Transaction ledger (BSC, chain 56)
+| # | Action | From → To | Tx hash | Gas used | Cost |
+|---|---|---|---|---|---|
+| 1 | Fund deployer 0.005 BNB (baw contract-call, preview clean, no risks, `requireConfirmation=false`) | Agentic Wallet → deployer | `0x4316f11cf40cf3ba7ca4fb2302a09d5f3dc831d218afd6692e9591dbc308ecaa` | 21,000 | ~0.00000105 BNB |
+| 2 | **Deploy AgentGateBadge** | deployer → CREATE | `0x5ffc8aaf8ac990b846affe65aa91b383000913597e3c6a2a236c638b35fd91bd` | 3,055,825 @ 0.05 gwei | 0.00015279125 BNB |
+| 3 | `transferOwnership(user)` | deployer | `0x0a7ae1606c5a39814dec1ed1649e0500d3fa492edd609eea6e20c5f372a84ec8` | 28,720 @ 0.05 gwei | 0.000001436 BNB |
+| 4 | Sweep remainder back | deployer → Agentic Wallet | `0xdf4d21de27060d00089fb20eff923c6a13ccd73399a8cd454eec5913449fc30f` | 21,000 @ 0.05 gwei | 0.00000105 BNB (swept **0.00484472275 BNB**) |
+| 5 | `setMintOpen(true)` (baw, preview clean) | Agentic Wallet (owner) | `0x3de0eed4634fef0bbbd815ddb0f0f6dd5e31fd4a1e1b6ffd80b148c5dd022b72` | 46,930 @ ~0.076 gwei | ≈0.0000035752 BNB |
+| 6 | Smoke `mint()` (baw, preview clean) | Agentic Wallet | `0x9ce8181e3005f72fac7cf0cf5838662891840e5417083581bb6dd09004698f82` | 108,440 @ ~0.089 gwei | ≈0.0000096491 BNB |
+
+- **Contract address: `0x42c9ED912025DF33cA1676AAD4651cDdeD3F09ED`** — `eth_getCode` non-empty on two RPCs; constructor state verified: `agentID()` = real Agent ID contract, `maxSupply()` = 10000, name/symbol = AgentGate Badge / AGB, `tokenURI(1)` = the 2,277-char data URI.
+- **Owner handover verified on two RPCs**: `owner()` = `0xF0C5832df6Ec3C1565842784Ff9229FA4566eEA5` (the Agentic Wallet). Deployer balance after sweep = **0 wei** on two RPCs; **deployer key destroyed** (`shred -u deploy/deployer-key.txt`).
+- **All-in cost to the user wallet ≈ 0.000170 BNB** (balance 0.02286258831 → 0.02269249581 BNB).
+- **Sourcify v2 (chain 56): `exact_match`** — creationMatch AND runtimeMatch exact (verifiedAt 2026-11-18T11:26:08Z). BscScan's own verification was NOT separately submitted/checked — do not claim it.
+- `mintOpen()` = **true** on two RPCs.
+
+### Smoke test results
+- User wallet: `balanceOf` = **1**, `hasClaimed` = true, **`ownerOf(2)` = user wallet** (see note below), `tokenURI` correct.
+- Read-only `eth_call` of `mint()` from a non-holder (`0x…dEaD`) reverts with **`NoAgentID(address)`** (selector `0xff592cec`, argument = caller) ✓.
+- ⚠️ **Note — token #1 is NOT the user's.** Nine seconds after `setMintOpen(true)` landed (block 134303153, 2026-11-18T11:26:33Z), an external Agent ID holder `0x62F9387B73f7CFDd0BB96C8A3451D07412481175` (Agent ID `balanceOf` = 1, verified) called the public `mint()` (tx `0x93d2959ea1f9c5025aa945a95a25367e720a2707bc538247a361860649ecd58f`) and took token #1 — a legitimate gated mint, so `totalMinted` = **2** and the user's smoke mint is token #2. Net effect: the badge already has its first organic Agent ID interaction.
+
+### Web
+- `web/index.html` `CONFIG.BADGE_CONTRACT` filled with the deployed address. Page hosting (GitHub Pages) still pending a user-provided repo-scoped PAT.
+
 ### After deployment (agent, once an address exists)
 - Sourcify v2 verify (payload ready) → record match level; BscScan's own verify page may still need a manual submission (files ready in `verify/`).
 - Route 1 only: `setMintOpen(true)` via baw preview→execute; read back `mintOpen() == true`.
